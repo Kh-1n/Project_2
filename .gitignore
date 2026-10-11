@@ -1,11 +1,12 @@
 # ==========================================
 # Data & Large Files (Crucial for GitHub)
+
+# Microsoft Excel temporary lock files
+~$*.xlsx
+~$*.xls
+
 # ==========================================
 # Ignore large dataset files to prevent blocking your GitHub uploads (>100MB)
-data/raw/*
-data/processed/*
-*.csv
-*.xlsx
 *.json
 *.parquet
 *.sqlite
