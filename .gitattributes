@@ -1,2 +1,14 @@
-# Auto detect text files and perform LF normalization
+# Handle line endings automatically
 * text=auto
+
+# Mark binary files as binary to prevent corruption
+*.xlsx binary
+*.xls binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+
+# Ensure Jupyter Notebooks are treated as text for better diffs
+*.ipynb text

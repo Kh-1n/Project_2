@@ -1,49 +1,30 @@
-# ==========================================
-# Data & Large Files (Crucial for GitHub)
-
-# Microsoft Excel temporary lock files
-~$*.xlsx
-~$*.xls
-
-# ==========================================
-# Ignore large dataset files to prevent blocking your GitHub uploads (>100MB)
-*.json
-*.parquet
-*.sqlite
-
-# ==========================================
-# Python Ignore Rules
-# ==========================================
-# Byte-compiled / optimized / DLL files
+# --- Python ---
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Virtual environments
-venv/
-.venv/
+.env
+.venv
 env/
-ENV/
-
-# Jupyter Notebook checkpoints
+venv/
 .ipynb_checkpoints/
 
-# ==========================================
-# R Ignore Rules
-# ==========================================
-# History and workspace files
+# --- R ---
 .Rhistory
 .RData
-.Ruserdata
-.RDataTmp
-
-# RStudio project configurations
 .Rproj.user/
-.Rapp.history
+.Ruserdata
 
-# ==========================================
-# Operating System Junk
-# ==========================================
+# --- OS Specific ---
 .DS_Store
-.DS_Store?
 Thumbs.db
+desktop.ini
+
+# --- Data Science Specific ---
+# We are NOT ignoring the data/ folder because this is a showcase.
+# However, we ignore large temporary log files.
+*.log
+*.tmp
+
+# --- Editor Specific ---
+.vscode/
+.idea/
