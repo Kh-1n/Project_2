@@ -1,0 +1,468 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  html_notebook: default
+---
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+library(tidyverse)
+library(cluster)
+```
+
+
+```{r}
+df<- read.csv("genz_digital_lifestyle_tech_habits.csv")
+str(df)
+summary(df)
+```
+```{r}
+#Move UserID to row names (it will no longer be a column)
+df<- df %>% column_to_rownames(var="User_ID")
+```
+
+
+```{r}
+#for memory of R behind the scene 'order' or 'factor'
+df$Tech_Savviness <- ordered(df$Tech_Savviness, levels=c("Beginner", "Intermediate", "Advanced", "Expert"))
+df$Privacy_Awareness_Level <- ordered(df$Privacy_Awareness_Level, levels=c("Low", "Medium", "High"))
+df$Gaming_Activity <- ordered(df$Gaming_Activity, levels=c("Never", "Occasional", "Frequent"))
+
+df$Preferred_Device <- factor(df$Preferred_Device)
+df$Gender <- factor(df$Gender)
+```
+
+
+```{r}
+#need to treat the two groups differently - standardization or one-hot encoding
+num_cols <- c("Age", "Daily_Screen_Time_hrs", "Social_Media_Usage_hrs", "Streaming_Subscriptions")
+cat_cols <- c("Gender", "Preferred_Device", "Gaming_Activity", "Tech_Savviness", "Privacy_Awareness_Level")
+
+#splitting the original df into two
+df_num <- df[ , num_cols] #the blank space >> keep all rows, but only num_cols
+df_cat <- df[ , cat_cols]
+
+```
+
+
+```{r}
+res_pca <- PCA(
+  df_num,
+  scale.unit = TRUE, # standardize variables
+  ncp = ncol(df_num),  # max number of PCs
+  graph = FALSE
+)
+#Kaiser Criterion (Eigenvalue>1)
+```
+
+
+```{r}
+res_pca$eig  #eigenvalue table
+fviz_eig(res_pca, addlabels = TRUE)   #scree plot
+```
+
+
+```{r}
+n_pc <- 2  #choose based on eig / scree
+pca_coords <- res_pca$ind$coord[ , 1:n_pc, drop = FALSE]  #res_pca may include eigenvalues, variable information, individual information, etc..(pca treats rows as individuals) So, extract ind, take all rows and the columns/components up to n_pc; drop=FALSE >> not to turn it into a vector/ a simple list of numbers
+```
+
+
+```{r}
+res_mca <- MCA(
+  df_cat,
+  ncp = ncol(df_cat)*2,  #just increased the total components. but lower than the result (no of total category levels - no of total variables)
+  graph = FALSE
+)
+```
+
+
+```{r}
+res_mca$eig
+fviz_eig(res_mca, addlabels = TRUE)
+```
+
+
+```{r}
+nrow(res_mca$eig)      # should be 13  (MCA always computes the full spectrum)
+ncol(res_mca$ind$coord)    # should be 10 (no of dimensions kept in the coordinate matrices) the first 10
+```
+```{r}
+n_mc <- 2
+mca_coords <- res_mca$ind$coord[ ,1:n_mc, drop=FALSE]
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+
+```{r}
+#combine num & cat factor scores into a single matrix
+cluster_data <- cbind(pca_coords, mca_coords) # just joining the df, not naming
+colnames(cluster_data) <- c(
+  paste0("PC", 1:n_pc), #PC prefix is f/b 1,2,3 from 1:n_pc
+  paste0("MC", 1:n_mc)
+)
+```
+
+
+```{r}
+cluster_data_scaled <- scale(cluster_data)
+#although input as df, R returns a matrix; stores original means and SDs as hidden attributes (scaled: center & scaled: scale)
+```
+
+
+```{r}
+#compute distance matrix & run Ward's hierarchical clustering
+dist_mat <- dist(cluster_data_scaled, method = "euclidean")
+hc <- hclust(dist_mat, method = "ward.D2")
+```
+
+
+```{r}
+k_range <- 2:7 #whatever range
+sil_results <- data.frame(k=integer(), sil = numeric()) #creates an empty dataframe
+for (k in k_range) {
+  #cut the tree into k clusters
+  c1 <- cutree(hc, k = k) #c1 will be a list of cluster assignments
+  
+  #Compute silhouette
+  sil <- silhouette(c1, dist_mat)
+  sil_mean <- mean(sil[, "sil_width"]) #sil object contains a 'width' for every single row
+  
+  sil_results <- rbind(
+    sil_results,
+    data.frame(k=k, sil = sil_mean)
+  )
+}                          
+sil_results
+```
+
+
+```{r}
+plot(sil_results$k, sil_results$sil, type = "b",
+     xlab = "Number of clusters k",
+     ylab = "Mean silhouette width",
+     main = "Silhouette vs k (Hierarchical Clustering on PCA+MCA)")
+```
+
+
+```{r}
+#best_k <- sil_results$k[which.max(sil_results$sil)]
+
+#clusters <- cutree(hc, k = best_k)
+#table(clusters)
+
+# Attach to original data
+#df$cluster <- factor(clusters)
+
+```
+
+
+```{r}
+k_chosen <- 2
+clusters <- cutree(hc, k = k_chosen)
+table(clusters)
+df$cluster <- factor(clusters)
+```
+
+
+```{r}
+round(res_pca$var$coord[ , 1:2], 3) #upto 3 rounding decimal
+```
+
+
+```{r}
+#contributions (%) of categories to MCA dimensions
+res_mca$var$coord[ , 1:n_mc]
+res_mca$var$contrib[ , 1:n_mc]
+```
+
+
+```{r}
+aggregate(df_num, by = list(cluster = df$cluster), FUN = mean)
+#group the rows based on the values in the cluster column; put that in a list() to work.
+```
+
+
+```{r}
+#cat/ ord variables by cluster
+for (v in cat_cols) {
+  cat("\n", v, "\n")
+  print(prop.table(table(df$cluster, df[[v]]), margin = 1))
+}
+#margin = 1 >> calculate % horizontally by rows
+```
+
+
+```{r}
+fviz_dend(
+  hc,
+  k = k_chosen,
+  type = "circular",
+  show_labels = FALSE, 
+  lwd = 0.1,             # Use 0.1 for maximum definition
+  k_colors = "npg",
+  main = "Hierarchical clustering on PCA+MCA scores"
+) +
+theme_void()             # This removes the background grid/axis for a cleaner look
+
+```
+
+
+```{r}
+# Save as a PDF or high-res PNG
+ggsave("clean_dendrogram.png", width = 10, height = 10) 
+```
+
+
+```{r}
+# 1. Create the plot object
+p <- fviz_dend(
+  hc,
+  k = k_chosen,
+  show_labels = FALSE,
+  lwd = 0.1,             # Ultra-thin lines to prevent bleeding
+  k_colors = "jco",
+  rect = FALSE,
+  main = "Hierarchical clustering on PCA+MCA scores"
+)
+
+# 2. Save as an ultra-wide image
+library(ggplot2)
+ggsave("wide_tree.png", plot = p, width = 30, height = 10, units = "in", limitsize = FALSE)
+
+```
+
+
+```{r}
+#scree plot for PCA
+fviz_eig(res_pca, addlabels = TRUE, ylim = c(0,100)) + ggtitle("PCA - variable explained")
+```
+
+
+```{r}
+#individuals in PCA space, colored by cluster
+fviz_pca_ind(
+  res_pca,
+  axes = c(1,2), #PC1 on x and PC2 on y
+  habillage = df$cluster, #colors the points based on the clusters & maps the groups back onto the pca coordinates
+  addEllipses = TRUE,
+  ellipse.type = "norm",
+  palette = "jco",
+  geom = "point", #this line hides the crowded label
+  repel = TRUE #for safety for geom
+) +
+  ggtitle("Individuals on PCA (numeric) axes, colored by cluster")
+```
+
+
+```{r}
+#pca variables
+fviz_pca_var(
+  res_pca,
+  axes = c(1,2),
+  col.var = "contrib",
+  gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+  repel = TRUE,
+  labelsize = 4.5,
+  arrowsize = 1
+) +
+  ggtitle ("PCA variable factor map (numeric variables)")
+```
+
+
+```{r}
+fviz_eig(res_mca, addlabels = TRUE) + ggtitle("MCA - inertia explained")
+```
+
+
+```{r}
+fviz_mca_ind(
+  res_mca,
+  axes = c(1,2),
+  habillage = df$cluster,
+  addEllipses = TRUE,
+  ellipse.type = "norm",
+  palette = "jco",
+  geom = "point",
+  repel = TRUE
+) +
+  ggtitle("Individuals on MCA (categorical) axes, colored by cluster")
+```
+
+```{r}
+library(ggplot2)
+library(ggrepel)
+
+var <- get_mca_var(res_mca) #it returns a list containing $coord, $cos2, $contrib, $inertia
+var_df <- as.data.frame(var$coord) #choose $coord
+
+#Rename first 2 dimensions for convenience
+colnames(var_df)[1:2] <- c("Dim1", "Dim2")
+
+#Sanity check
+nrow(var_df)
+head(rownames(var_df))
+```
+
+
+```{r}
+#cat variables in the same order used in MCA
+cat_cols <- colnames(df_cat)
+
+#Number of levels per variable
+lev_counts <-sapply(df_cat, nlevels)
+lev_counts
+sum(lev_counts) #should equal nrow(var_df)
+
+#Build 'variable' as: var1 repeated nlevels(var1) times, then var2, etc. (get_mca_var gives the coordinates for the levels, but it isn't clean)
+var_df$variable <- rep(cat_cols, times = lev_counts)
+
+#The level label is just the row name (e.g. "Female", "Own")
+var_df$level <- rownames(var_df)
+
+#Nice label: "Variable:Level"
+var_df$label <- paste(var_df$variable, var_df$level, sep = ":")
+
+#Check
+unique(var_df$variable)
+length(unique(var_df$variable))
+```
+
+```{r}
+ggplot(var_df, aes(x = Dim1, y = Dim2, colour = variable, shape = variable)) + 
+  geom_point(size = 3) +
+  ggrepel::geom_text_repel(aes(label = label), size = 3, show.legend = FALSE) +
+  scale_color_brewer(palette = "Set1") +
+  theme_minimal() +
+  labs(
+    title = "MCA category map (coloured by variables)",
+    x = "Dim 1",
+    y = "Dim 2",
+    colour = "Variable",
+    shape = "Variable"
+  )
+```
+
+
+```{r}
+fviz_cluster(
+  list(data = cluster_data_scaled, cluster = clusters),
+  geom = "point",
+  ellipse.type = "norm",
+  palette = "jco",
+  show.clust.cent = FALSE
+) +
+  ggtitle("Clusters in PCA+MCA component space")
+```
+
+
+```{r}
+plot_df <- as.data.frame(cluster_data_scaled) #change matrix into df again for ggplot, & include only ingredients
+plot_df$cluster <- df$cluster #df$cluster includes actual cluster assignment, so create 'cluster' column in plot_df
+
+ggplot(plot_df, aes(x = PC1, y = MC1, colour = cluster)) +
+  geom_point(alpha = 0.7, size = 2) +
+  stat_ellipse(type = "norm") +
+  scale_colour_brewer(palette = "Set1") +
+  theme_minimal() +
+  labs(
+    title = "Clusters on PC1 vs MC1",
+    x = "PC1 (numeric)",
+    y = "MC1 (categorical)"
+  )
+
+```
+
+```{r}
+head(num_cols)
+```
+
+```{r}
+num_cols <- colnames(df_num) #to create the whitelist of the column names automatically (excluding unnecessary columns) for summarise func
+
+cluster_means <- df %>% #receives df as input and produce df or (tibble) as output.
+  group_by(cluster) %>%
+  summarise(across(all_of(num_cols), mean, na.rm = TRUE)) #na.rm > ignore the missing piece
+
+cluster_means
+```
+
+
+```{r}
+library(reshape2)
+
+cm_scaled <- cluster_means
+cm_scaled[ , num_cols] <- scale(cm_scaled[ , num_cols]) #scale() turns the columns into a matrix; then cm_scaled > back to df
+
+cm_long <- melt(cm_scaled, id.vars = "cluster", variable.name = "variable", value.name = "z") #melt() changes the table from 'Wide' to 'Long' as ggplot requires 'tidy' data where every row is a single observation (X= variable, Y=cluster, z=fill color)
+
+ggplot(cm_long, aes(x = variable, y = as.factor (cluster), fill = z)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "#4575b4", mid = "white", high = "#d73027") +
+  theme_minimal() +
+  labs(
+    title = "Cluster profiles for numeric variables (z-scores)",
+    x = "",
+    y = "Cluster"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+
+```{r}
+cat_cols <- colnames(df_cat)  # or c("ord1","ord2","ord3","nom1","nom2")
+
+for (v in cat_cols) {
+  p <- ggplot(df, aes_string(x = "cluster", fill = v)) +
+    geom_bar(position = "fill") +
+    scale_y_continuous(labels = scales::percent) +
+    scale_fill_brewer(palette = "Dark2") +
+    theme_minimal() +
+    labs(
+      title = paste("Distribution of", v, "by cluster"),
+      y = "Proportion",
+      x = "cluster"
+    )
+  print(p)
+}
+
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+# Example: test using 2, 3, 4 MCA dims for clustering
+#mca_coords <- res_mca$ind$coord
+
+#for (n_mc in 2) {
+  #X_mc <- mca_coords[ , 1:n_mc, drop = FALSE]
+  # combine with PCA PCs if you want, then run clustering and assess
+}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
+
