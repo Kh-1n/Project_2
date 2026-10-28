@@ -13,8 +13,8 @@ This project explores the complexities of digital behavior among 500 youths, uti
 
 ## Dataset Description
 The dataset contains 500 records following the variables:
-  •	Demographics: Age, Gender
-  •	Metrics used: Daily Screen Time Hours, Preferred Device, Social Media Usage Hours, Gaming Activity, Tech Savviness, Streaming Subscriptions, and Privacy Awareness Level 
+  * Demographics: Age, Gender
+  * Metrics used: Daily Screen Time Hours, Preferred Device, Social Media Usage Hours, Gaming Activity, Tech Savviness, Streaming Subscriptions, and Privacy Awareness Level 
 
 ## Analysis Workflow
 This project was executed through three distinct analytical pipelines. Each workflow consists of a technical implementation (code) and a comprehensive synthesis of the results (report).
