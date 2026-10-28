@@ -21,25 +21,25 @@ This project was executed through three distinct analytical pipelines. Each work
 
 1. **Predictive Modeling via Random Forest (Python)**
 Objective: To determine the degree of predictability within the digital behavior sample and identify whether a small set of dominant features could classify the target variable.
-  •	Workflow: Data Preprocessing → Feature Engineering → Random Forest Ensemble Training → Model Evaluation
-  •	Technical Outcome: The model failed to yield a statistically significant prediction result. This suggests that the device choice is not driven by a few linear or non-linear predictors, but rather by a complex, multifaceted interplay of variables, confirming the high heterogeneity of the sample.
-  •	Deliverables: [View Technical Code](./technical_code/Random%20Forest_Python.ipynb) | [Read Full Analysis Report](./full_reports/Random%20Forest_Python.pdf)
+  * Workflow: Data Preprocessing → Feature Engineering → Random Forest Ensemble Training → Model Evaluation
+  * Technical Outcome: The model failed to yield a statistically significant prediction result. This suggests that the device choice is not driven by a few linear or non-linear predictors, but rather by a complex, multifaceted interplay of variables, confirming the high heterogeneity of the sample.
+  * Deliverables: [View Technical Code](./technical_code/Random%20Forest_Python.ipynb) | [Read Full Analysis Report](./full_reports/Random%20Forest_Python.pdf)
 
-3. **Mixed-Data Segmentation: FAMD & K-Means (Python)**
+2. **Mixed-Data Segmentation: FAMD & K-Means (Python)**
 Objective: To reduce the dimensionality of a mixed-type feature space (numerical, ordinal, and nominal) and identify cohesive behavioral clusters. 
-  •	Workflow:
+  * Workflow:
     -	Dimensionality Reduction: FAMD was iteratively tested with 5, 10, and 16 components. 
     -	Variance Analysis: Scree plots indicated a linear decrease in eigenvalues (ranging from 4.34 to 4.85 for the first 5 components), suggesting that variance is distributed across several dimensions rather than dominated by a few. 
     -	Clustering Optimization: K-means clustering was applied to the FAMD projections. Silhouette analysis was used to optimize the cluster count, resulting in the selection of 2 components and 3 clusters (Silhouette Score: 0.36).
-  •	Deliverables: [View Technical Code](./technical_code/FA%20KMeans_Python.ipynb) |[Read Full Analysis Report](./full_reports/FA%20KMeans_Python.pdf)
+  * Deliverables: [View Technical Code](./technical_code/FA%20KMeans_Python.ipynb) |[Read Full Analysis Report](./full_reports/FA%20KMeans_Python.pdf)
 
 3. **Structural Validation: PCA-MCA & Hierarchical Clustering (R)**
 Objective: To cross-validate the clustering results using a bifurcated approach to dimensionality reduction and a nested grouping strategy. 
-  •	Workflow:
+  * Workflow:
     -	Bifurcated Reduction: PCA was applied to the numerical subset, and MCA was applied to the categorical subset.
     -	Agglomerative Clustering: HC was performed on the combined scaled scores using Euclidean distance and Ward’s minimum variance method.
     -	Selection Logic: A dendrogram was used to visualize the nested structure. Despite modest mean Silhouette values (0.13-0.15), a 2-cluster solution was selected as the most stable representation of the underlying structural divide. 
-  •	Deliverables: [View Technical Code](./technical_code/PCA_MCA_R.Rmd) | [Read Full Analysis Report](./full_reports/PCA%20MCA#20HC_R.pdf)
+  * Deliverables: [View Technical Code](./technical_code/PCA_MCA_R.Rmd) | [Read Full Analysis Report](./full_reports/PCA%20MCA#20HC_R.pdf)
 
 
 ## 📈 Synthesis of Results
