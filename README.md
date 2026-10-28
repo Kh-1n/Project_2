@@ -20,12 +20,14 @@ The dataset contains 500 records following the variables:
 This project was executed through three distinct analytical pipelines. Each workflow consists of a technical implementation (code) and a comprehensive synthesis of the results (report).
 
 1. **Predictive Modeling via Random Forest (Python)**
+
 Objective: To determine the degree of predictability within the digital behavior sample and identify whether a small set of dominant features could classify the target variable.
   * Workflow: Data Preprocessing → Feature Engineering → Random Forest Ensemble Training → Model Evaluation
   * Technical Outcome: The model failed to yield a statistically significant prediction result. This suggests that the device choice is not driven by a few linear or non-linear predictors, but rather by a complex, multifaceted interplay of variables, confirming the high heterogeneity of the sample.
   * Deliverables: [View Technical Code](./technical_code/Random%20Forest_Python.ipynb) | [Read Full Analysis Report](./full_reports/Random%20Forest_Python.pdf)
 
 2. **Mixed-Data Segmentation: FAMD & K-Means (Python)**
+
 Objective: To reduce the dimensionality of a mixed-type feature space (numerical, ordinal, and nominal) and identify cohesive behavioral clusters. 
   * Workflow:
     -	Dimensionality Reduction: FAMD was iteratively tested with 5, 10, and 16 components. 
@@ -34,6 +36,7 @@ Objective: To reduce the dimensionality of a mixed-type feature space (numerical
   * Deliverables: [View Technical Code](./technical_code/FA%20KMeans_Python.ipynb) |[Read Full Analysis Report](./full_reports/FA%20KMeans_Python.pdf)
 
 3. **Structural Validation: PCA-MCA & Hierarchical Clustering (R)**
+
 Objective: To cross-validate the clustering results using a bifurcated approach to dimensionality reduction and a nested grouping strategy. 
   * Workflow:
     -	Bifurcated Reduction: PCA was applied to the numerical subset, and MCA was applied to the categorical subset.
@@ -50,22 +53,22 @@ The absence of a clear "elbow" in the scree plots and the modest silhouette scor
 ## 🚀 Getting Started
 ## Prerequisites
 To execute the Python analysis, make sure you have Python 3.x installed along with the required libraries:
-  •	pandas
-  •	matplotlib
-  •	numpy
-  •	seaborn
-  •	sklearn
-  •	altair
-  •	factor_analyzer
-  •	prince
+  * pandas
+  * matplotlib
+  * numpy
+  * seaborn
+  * sklearn
+  * altair
+  * factor_analyzer
+  * prince
 
 To run the R analysis, make sure you have R 4.1.0 or later installed along with the required libraries:
-  •	FactoMineR
-  •	factoextra
-  •	tidyverse
-  •	cluster
-  •	ggrepel
-  •	reshape2
+  * FactoMineR
+  * factoextra
+  * tidyverse
+  * cluster
+  * ggrepel
+  * reshape2
 
 ## Execution Steps
 1.	Download the Files: Download or clone this repository directly from GitHub to your local machine.
